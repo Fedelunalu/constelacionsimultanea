@@ -141,6 +141,7 @@
       <div class="section">
         <h2>Guardar / Reset</h2>
         <div style="display:flex;gap:8px;">
+          <button id="saveBtn">Guardar Cambios</button>
           <button id="syncBtn">Sincronizar</button>
           <button id="exportJSON">Exportar JSON</button>
           <button id="importJSON">Importar JSON</button>
@@ -478,6 +479,7 @@
 
 
   // export/import/reset
+  const saveBtn = document.getElementById("saveBtn");
   const exportBtn = document.getElementById("exportJSON");
   const importBtn = document.getElementById("importJSON");
   const resetBtn = document.getElementById("resetBtn");
