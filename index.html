@@ -141,6 +141,7 @@
       <div class="section">
         <h2>Guardar / Reset</h2>
         <div style="display:flex;gap:8px;">
+          <button id="syncBtn">Sincronizar</button>
           <button id="exportJSON">Exportar JSON</button>
           <button id="importJSON">Importar JSON</button>
           <button id="resetBtn">Resetear</button>
@@ -1015,6 +1016,52 @@ function openOverlay(nodeId, pointer) {
   });
 
 
+  // ---------- Sync button ----------
+  const syncBtn = document.getElementById("syncBtn");
+  syncBtn.addEventListener("click", async () => {
+    try {
+      const response = await fetch(JSONBIN_URL, {
+        method: 'GET',
+        headers: {
+          'X-Master-Key': JSONBIN_MASTER_KEY
+        }
+      });
+      if (!response.ok) throw new Error('Failed to load from JSONBin');
+      const data = await response.json();
+      const binData = data.record;
+      if (!binData || !binData.nodes || !binData.edges) {
+        setMessage(storageMessage, "No data in bin", 2000);
+        return;
+      }
+      const currentNodes = nodes.get();
+      const currentEdges = edges.get();
+      const currentNodeIds = new Set(currentNodes.map(n => n.id));
+      const currentEdgeIds = new Set(currentEdges.map(e => e.id));
+      const nodesToAdd = binData.nodes.filter(n => !currentNodeIds.has(n.id));
+      const edgesToAdd = binData.edges.filter(e => !currentEdgeIds.has(e.id));
+      if (nodesToAdd.length === 0 && edgesToAdd.length === 0) {
+        setMessage(storageMessage, "No new data to sync", 2000);
+        return;
+      }
+      // Normalize nodes
+      const normNodes = nodesToAdd.map(n => {
+        const copy = { ...n };
+        if (copy.fixed === true) copy.fixed = { x: true, y: true };
+        return copy;
+      });
+      nodes.add(normNodes);
+      edges.add(edgesToAdd);
+      persistAll();
+      refreshConstellationOptions();
+      ensureGroupSeparation();
+      setMessage(storageMessage, `Synced: added ${nodesToAdd.length} nodes and ${edgesToAdd.length} edges`, 4000);
+    } catch (e) {
+      console.warn("Sync failed:", e);
+      setMessage(storageMessage, "Sync failed", 2000);
+    }
+  });
+
+
   // ---------- utility: clicking empty area deselects and closes overlay ----------
   // (No handler needed: vis.js already handles background clicks appropriately)
 
@@ -1088,4 +1135,5 @@ function openOverlay(nodeId, pointer) {
 </script>
 </body>
 </html>
+
 
